@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { Api, getExtensionApi } from './api';
 import { CommandManager } from './commands/commandManager';
 import { registerBaseCommands } from './commands/index';
-import { createLazyClientHost, lazilyActivateClient } from './lazyClientHost';
+import { createHostFactory, lazilyActivateClient } from './lazyClientHost';
 import { noopRequestCancellerFactory } from './tsServer/cancellation';
 import { noopLogDirectoryProvider } from './tsServer/logDirectoryProvider';
 import { WorkerServerProcess } from './tsServer/serverProcess.browser';
@@ -57,7 +57,7 @@ export function activate(
 			vscode.Uri.joinPath(context.extensionUri, 'dist/browser/typescript/tsserver.web.js').toString(),
 			API.fromSimpleString('4.5.4')));
 
-	const lazyClientHost = createLazyClientHost(context, false, {
+	const lazyClientHost = createHostFactory(context, false, {
 		pluginManager,
 		commandManager,
 		logDirectoryProvider: noopLogDirectoryProvider,
@@ -78,7 +78,7 @@ export function activate(
 		context.subscriptions.push(module.register());
 	});
 
-	context.subscriptions.push(lazilyActivateClient(lazyClientHost, pluginManager, activeJsTsEditorTracker));
+	context.subscriptions.push(lazilyActivateClient(context, lazyClientHost, pluginManager, activeJsTsEditorTracker));
 
 	return getExtensionApi(onCompletionAccepted.event, pluginManager);
 }

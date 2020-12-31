@@ -30,8 +30,8 @@ export class ElectronServiceConfigurationProvider extends BaseServiceConfigurati
 
 	protected extractLocalTsdk(configuration: vscode.WorkspaceConfiguration): string | null {
 		const inspect = configuration.inspect('typescript.tsdk');
-		if (inspect && typeof inspect.workspaceValue === 'string') {
-			return this.fixPathPrefixes(inspect.workspaceValue);
+		if (inspect && (typeof inspect.workspaceFolderValue === 'string' || typeof inspect.workspaceValue === 'string')) {
+			return this.fixPathPrefixes(inspect.workspaceFolderValue as string || inspect.workspaceValue as string);
 		}
 		return null;
 	}

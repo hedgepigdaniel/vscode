@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import { Api, getExtensionApi } from './api';
 import { CommandManager } from './commands/commandManager';
 import { registerBaseCommands } from './commands/index';
-import { createLazyClientHost, lazilyActivateClient } from './lazyClientHost';
+import { createHostFactory, lazilyActivateClient } from './lazyClientHost';
 import { nodeRequestCancellerFactory } from './tsServer/cancellation.electron';
 import { NodeLogDirectoryProvider } from './tsServer/logDirectoryProvider.electron';
 import { ElectronServiceProcessFactory } from './tsServer/serverProcess.electron';
@@ -37,7 +37,7 @@ export function activate(
 	const activeJsTsEditorTracker = new ActiveJsTsEditorTracker();
 	context.subscriptions.push(activeJsTsEditorTracker);
 
-	const lazyClientHost = createLazyClientHost(context, onCaseInsensitiveFileSystem(), {
+	const hostFactory = createHostFactory(context, onCaseInsensitiveFileSystem(), {
 		pluginManager,
 		commandManager,
 		logDirectoryProvider,
@@ -50,17 +50,17 @@ export function activate(
 		onCompletionAccepted.fire(item);
 	});
 
-	registerBaseCommands(commandManager, lazyClientHost, pluginManager, activeJsTsEditorTracker);
+	registerBaseCommands(commandManager, hostFactory, pluginManager, activeJsTsEditorTracker);
 
 	import('./task/taskProvider').then(module => {
-		context.subscriptions.push(module.register(lazyClientHost.map(x => x.serviceClient)));
+		context.subscriptions.push(module.register(hostFactory));
 	});
 
 	import('./languageFeatures/tsconfig').then(module => {
 		context.subscriptions.push(module.register());
 	});
 
-	context.subscriptions.push(lazilyActivateClient(lazyClientHost, pluginManager, activeJsTsEditorTracker));
+	context.subscriptions.push(lazilyActivateClient(context, hostFactory, pluginManager, activeJsTsEditorTracker));
 
 	return getExtensionApi(onCompletionAccepted.event, pluginManager);
 }

@@ -4,16 +4,16 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { TypeScriptRequests } from '../typescriptService';
-import TypeScriptServiceClientHost from '../typeScriptServiceClientHost';
+import { HostFactory } from "../lazyClientHost";
 import { nulToken } from '../utils/cancellation';
-import { Lazy } from '../utils/lazy';
 import { Command } from './commandManager';
+import { getCurrentDocumentUri } from '../utils/getCurrentDocumentUri';
 
 export class TSServerRequestCommand implements Command {
 	public readonly id = 'typescript.tsserverRequest';
 
 	public constructor(
-		private readonly lazyClientHost: Lazy<TypeScriptServiceClientHost>
+		private readonly hostFactory: HostFactory
 	) { }
 
 	public execute(requestID: keyof TypeScriptRequests, args?: any, config?: any) {
@@ -37,7 +37,15 @@ export class TSServerRequestCommand implements Command {
 		];
 
 		if (!allowList.includes(requestID)) { return; }
-		return this.lazyClientHost.value.serviceClient.execute(requestID, args, token, config);
+
+		const uri = getCurrentDocumentUri();
+		if (!uri) {
+			return;
+		}
+		const host = this.hostFactory.getHostForUri(uri);
+		host.serviceClient.restartTsServer(true);
+
+		return host.serviceClient.execute(requestID, args, token, config);
 	}
 }
 

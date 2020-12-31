@@ -115,6 +115,7 @@ export interface TypeScriptServiceConfiguration {
 	readonly watchOptions: protocol.WatchOptions | undefined;
 	readonly includePackageJsonAutoImports: 'auto' | 'on' | 'off' | undefined;
 	readonly enableTsServerTracing: boolean;
+	readonly workspaceFolder?: vscode.WorkspaceFolder;
 }
 
 export function areServiceConfigurationsEqual(a: TypeScriptServiceConfiguration, b: TypeScriptServiceConfiguration): boolean {
@@ -127,8 +128,8 @@ export interface ServiceConfigurationProvider {
 
 export abstract class BaseServiceConfigurationProvider implements ServiceConfigurationProvider {
 
-	public loadFromWorkspace(): TypeScriptServiceConfiguration {
-		const configuration = vscode.workspace.getConfiguration();
+	public loadFromWorkspace(workspaceFolder?: vscode.WorkspaceFolder): TypeScriptServiceConfiguration {
+		const configuration = vscode.workspace.getConfiguration(undefined, workspaceFolder);
 		return {
 			locale: this.extractLocale(configuration),
 			globalTsdk: this.extractGlobalTsdk(configuration),

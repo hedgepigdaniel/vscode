@@ -9,16 +9,26 @@ import { OngoingRequestCancellerFactory } from './tsServer/cancellation';
 import { ILogDirectoryProvider } from './tsServer/logDirectoryProvider';
 import { TsServerProcessFactory } from './tsServer/server';
 import { ITypeScriptVersionProvider } from './tsServer/versionProvider';
+import TypeScriptServiceClient from './typescriptServiceClient';
 import TypeScriptServiceClientHost from './typeScriptServiceClientHost';
 import { ActiveJsTsEditorTracker } from './utils/activeJsTsEditorTracker';
 import { ServiceConfigurationProvider } from './utils/configuration';
 import * as fileSchemes from './utils/fileSchemes';
 import { standardLanguageDescriptions } from './utils/languageDescription';
-import { lazy, Lazy } from './utils/lazy';
 import ManagedFileContextManager from './utils/managedFileContext';
 import { PluginManager } from './utils/plugins';
 
-export function createLazyClientHost(
+const tsHosts: Map<string, TypeScriptServiceClientHost> = new Map();
+
+export interface HostFactory {
+	getHostForWorkspaceFolder(
+		workspaceFolder: vscode.WorkspaceFolder
+	): TypeScriptServiceClientHost;
+	getHostForUri(uri: vscode.Uri): TypeScriptServiceClientHost;
+	reloadProjects(): void;
+}
+
+export function createHostFactory(
 	context: vscode.ExtensionContext,
 	onCaseInsensitiveFileSystem: boolean,
 	services: {
@@ -31,26 +41,55 @@ export function createLazyClientHost(
 		activeJsTsEditorTracker: ActiveJsTsEditorTracker;
 		serviceConfigurationProvider: ServiceConfigurationProvider;
 	},
-	onCompletionAccepted: (item: vscode.CompletionItem) => void,
-): Lazy<TypeScriptServiceClientHost> {
-	return lazy(() => {
+	onCompletionAccepted: (item: vscode.CompletionItem) => void
+): HostFactory {
+	const getHostForWorkspaceFolder: HostFactory["getHostForWorkspaceFolder"] = (
+		workspaceFolder
+	) => {
+		const uriStr = workspaceFolder.uri.toString();
+		if (tsHosts.has(uriStr)) {
+			return tsHosts.get(uriStr)!;
+		}
 		const clientHost = new TypeScriptServiceClientHost(
 			standardLanguageDescriptions,
 			context,
 			onCaseInsensitiveFileSystem,
 			services,
-			onCompletionAccepted);
+			onCompletionAccepted
+		);
 
 		context.subscriptions.push(clientHost);
-
+		tsHosts.set(uriStr, clientHost);
+		context.subscriptions.push(
+			new ManagedFileContextManager(services.activeJsTsEditorTracker, (resource) => {
+				return clientHost.serviceClient.toPath(resource);
+			})
+		);
 		return clientHost;
-	});
+	};
+	return {
+		getHostForWorkspaceFolder,
+		getHostForUri: (uri) => {
+			let workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+			if (!workspaceFolder) {
+				workspaceFolder = {
+					index: 0,
+					name: "DEFAULT",
+					uri: vscode.Uri.parse("unititled://"),
+				};
+			}
+			return getHostForWorkspaceFolder(workspaceFolder);
+		},
+		reloadProjects: () => {
+			[...tsHosts.values()].forEach((host) => host.reloadProjects());
+		},
+	};
 }
 
 export function lazilyActivateClient(
-	lazyClientHost: Lazy<TypeScriptServiceClientHost>,
+	context: vscode.ExtensionContext,
+	hostFactory: HostFactory,
 	pluginManager: PluginManager,
-	activeJsTsEditorTracker: ActiveJsTsEditorTracker,
 ): vscode.Disposable {
 	const disposables: vscode.Disposable[] = [];
 
@@ -59,29 +98,17 @@ export function lazilyActivateClient(
 		...pluginManager.plugins.map(x => x.languages)
 	].flat();
 
-	let hasActivated = false;
-	const maybeActivate = (textDocument: vscode.TextDocument): boolean => {
-		if (!hasActivated && isSupportedDocument(supportedLanguage, textDocument)) {
-			hasActivated = true;
-			// Force activation
-			void lazyClientHost.value;
-
-			disposables.push(new ManagedFileContextManager(activeJsTsEditorTracker, resource => {
-				return lazyClientHost.value.serviceClient.toPath(resource);
-			}));
-			return true;
+	const initHostForDocument = (doc: vscode.TextDocument): void => {
+		if (isSupportedDocument(supportedLanguage, doc)) {
+			hostFactory.getHostForUri(doc.uri);
 		}
-		return false;
 	};
 
-	const didActivate = vscode.workspace.textDocuments.some(maybeActivate);
-	if (!didActivate) {
-		const openListener = vscode.workspace.onDidOpenTextDocument(doc => {
-			if (maybeActivate(doc)) {
-				openListener.dispose();
-			}
-		}, undefined, disposables);
-	}
+	context.subscriptions.push(
+		vscode.workspace.onDidOpenTextDocument(initHostForDocument)
+	);
+
+	vscode.workspace.textDocuments.forEach(initHostForDocument);
 
 	return vscode.Disposable.from(...disposables);
 }
