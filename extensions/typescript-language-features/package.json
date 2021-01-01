@@ -27,6 +27,7 @@
     }
   },
   "repository": "https://github.com/asvetliakov/vscode",
+  "enableProposedApi": false,
   "engines": {
     "vscode": "^1.30.0"
   },
