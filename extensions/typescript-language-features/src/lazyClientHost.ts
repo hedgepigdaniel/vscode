@@ -55,7 +55,8 @@ export function createHostFactory(
 			context,
 			onCaseInsensitiveFileSystem,
 			services,
-			onCompletionAccepted
+			onCompletionAccepted,
+			workspaceFolder
 		);
 
 		context.subscriptions.push(clientHost);

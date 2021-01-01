@@ -361,7 +361,7 @@ class GetErrRequest {
 	}
 }
 
-export default class BufferSyncSupport extends Disposable {
+export default class BufferSynreturncSupport extends Disposable {
 
 	private readonly client: ITypeScriptServiceClient;
 
@@ -374,13 +374,16 @@ export default class BufferSyncSupport extends Disposable {
 	private pendingGetErr: GetErrRequest | undefined;
 	private listening: boolean = false;
 	private readonly synchronizer: BufferSynchronizer;
+	private readonly workspaceFolder?: vscode.WorkspaceFolder;
 
 	constructor(
 		client: ITypeScriptServiceClient,
 		modeIds: readonly string[],
-		onCaseInsensitiveFileSystem: boolean
+		onCaseInsensitiveFileSystem: boolean,
+		workspaceFolder?: vscode.WorkspaceFolder,
 	) {
 		super();
+		this.workspaceFolder = workspaceFolder;
 		this.client = client;
 		this.modeIds = new Set<string>(modeIds);
 
@@ -411,6 +414,12 @@ export default class BufferSyncSupport extends Disposable {
 		vscode.workspace.onDidChangeTextDocument(this.onDidChangeTextDocument, this, this._disposables);
 		vscode.window.onDidChangeVisibleTextEditors(e => {
 			for (const { document } of e) {
+				if (this.workspaceFolder) {
+					const docWorkspace = vscode.workspace.getWorkspaceFolder(document.uri);
+					if (!docWorkspace?.uri || docWorkspace.uri.toString() !== this.workspaceFolder.uri.toString()) {
+						continue;
+					}
+				}
 				const syncedBuffer = this.syncedBuffers.get(document.uri);
 				if (syncedBuffer) {
 					this.requestDiagnostic(syncedBuffer);
@@ -472,6 +481,12 @@ export default class BufferSyncSupport extends Disposable {
 		if (!this.modeIds.has(document.languageId)) {
 			return false;
 		}
+		if (this.workspaceFolder) {
+			const docWorkspace = vscode.workspace.getWorkspaceFolder(document.uri);
+			if (!docWorkspace?.uri || docWorkspace.uri.toString() !== this.workspaceFolder.uri.toString()) {
+				return false;
+			}
+		}
 		const resource = document.uri;
 		const filepath = this.client.normalizedPath(resource);
 		if (!filepath) {
@@ -523,6 +538,12 @@ export default class BufferSyncSupport extends Disposable {
 	}
 
 	private onDidCloseTextDocument(document: vscode.TextDocument): void {
+		if (this.workspaceFolder) {
+			const docWorkspace = vscode.workspace.getWorkspaceFolder(document.uri);
+			if (!docWorkspace?.uri || docWorkspace.uri.toString() !== this.workspaceFolder.uri.toString()) {
+				return;
+			}
+		}
 		this.closeResource(document.uri);
 	}
 
@@ -530,6 +551,12 @@ export default class BufferSyncSupport extends Disposable {
 		const syncedBuffer = this.syncedBuffers.get(e.document.uri);
 		if (!syncedBuffer) {
 			return;
+		}
+		if (this.workspaceFolder) {
+			const docWorkspace = vscode.workspace.getWorkspaceFolder(e.document.uri);
+			if (!docWorkspace?.uri || docWorkspace.uri.toString() !== this.workspaceFolder.uri.toString()) {
+				return;
+			}
 		}
 
 		this._onWillChange.fire(syncedBuffer.resource);

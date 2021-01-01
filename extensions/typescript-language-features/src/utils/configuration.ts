@@ -123,7 +123,7 @@ export function areServiceConfigurationsEqual(a: TypeScriptServiceConfiguration,
 }
 
 export interface ServiceConfigurationProvider {
-	loadFromWorkspace(): TypeScriptServiceConfiguration;
+	loadFromWorkspace(workspaceFolder?: vscode.WorkspaceFolder): TypeScriptServiceConfiguration;
 }
 
 export abstract class BaseServiceConfigurationProvider implements ServiceConfigurationProvider {

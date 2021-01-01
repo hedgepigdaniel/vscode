@@ -172,7 +172,7 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 			this.restartTsServer();
 		}));
 
-		this.bufferSyncSupport = new BufferSyncSupport(this, allModeIds, onCaseInsenitiveFileSystem);
+		this.bufferSyncSupport = new BufferSyncSupport(this, allModeIds, onCaseInsenitiveFileSystem, workspaceFolder);
 		this.onReady(() => { this.bufferSyncSupport.listen(); });
 
 		this.diagnosticsManager = new DiagnosticsManager('typescript', onCaseInsenitiveFileSystem);
@@ -187,7 +187,7 @@ export default class TypeScriptServiceClient extends Disposable implements IType
 
 		vscode.workspace.onDidChangeConfiguration(() => {
 			const oldConfiguration = this._configuration;
-			this._configuration = services.serviceConfigurationProvider.loadFromWorkspace();
+			this._configuration = services.serviceConfigurationProvider.loadFromWorkspace(workspaceFolder);
 
 			this.versionProvider.updateConfiguration(this._configuration);
 			this._versionManager.updateConfiguration(this._configuration);
