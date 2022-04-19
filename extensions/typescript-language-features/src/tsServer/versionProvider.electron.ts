@@ -62,7 +62,7 @@ export class DiskTypeScriptVersionProvider implements ITypeScriptVersionProvider
 	}
 
 	public get bundledVersion(): TypeScriptVersion {
-		const version = this.getContributedVersion(TypeScriptVersionSource.Bundled, 'asvetliakov.typescript-language-features-multi-host', ['node_modules']);
+		const version = this.getContributedVersion(TypeScriptVersionSource.Bundled, 'hedgepigdaniel.typescript-language-features-multi-host', ['node_modules']);
 		if (version) {
 			return version;
 		}
