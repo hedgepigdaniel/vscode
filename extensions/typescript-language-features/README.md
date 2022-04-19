@@ -7,3 +7,12 @@ Original LS client shares single TS server between all workspaces, but since the
 If you don't use yarn pnp you don't need it
 
 **The built-in typescript LS client must be disabled** . Go to extension tab in vscode and type `@builtin @id:vscode.typescript-language-features` in search box. Click at icon and click disable. Reload and install this extension.
+
+
+## Build instructions
+
+```shell
+$ cd extensions/typescript-language-features
+$ gulp compile-extension:typescript-language-features
+$ vsce package
+```
