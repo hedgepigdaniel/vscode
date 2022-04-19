@@ -19,10 +19,14 @@ export class VersionStatus extends Disposable {
 
 	constructor(
 		private readonly _client: ITypeScriptServiceClient,
+		workspaceFolder?: vscode.WorkspaceFolder
 	) {
 		super();
 
-		this._statusItem = this._register(vscode.languages.createLanguageStatusItem('typescript.version', jsTsLanguageModes));
+		this._statusItem = this._register(vscode.languages.createLanguageStatusItem(
+			`typescript.version${workspaceFolder === undefined ? '' : `.${workspaceFolder.name}`}`,
+			jsTsLanguageModes
+		));
 
 		this._statusItem.name = localize('versionStatus.name', "TypeScript Version");
 		this._statusItem.detail = localize('versionStatus.detail', "TypeScript Version");

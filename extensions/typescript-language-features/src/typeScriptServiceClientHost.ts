@@ -96,8 +96,8 @@ export default class TypeScriptServiceClientHost extends Disposable {
 		this.client.onConfigDiagnosticsReceived(diag => this.configFileDiagnosticsReceived(diag), null, this._disposables);
 		this.client.onResendModelsRequested(() => this.populateService(), null, this._disposables);
 
-		this._register(new VersionStatus(this.client));
-		this._register(new IntellisenseStatus(this.client, services.commandManager, services.activeJsTsEditorTracker));
+		this._register(new VersionStatus(this.client, workspaceFolder));
+		this._register(new IntellisenseStatus(this.client, services.commandManager, services.activeJsTsEditorTracker, workspaceFolder));
 		this._register(new AtaProgressReporter(this.client));
 		this.typingsStatus = this._register(new TypingsStatus(this.client));
 

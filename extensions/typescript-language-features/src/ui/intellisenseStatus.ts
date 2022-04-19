@@ -59,6 +59,7 @@ export class IntellisenseStatus extends Disposable {
 		private readonly _client: ITypeScriptServiceClient,
 		commandManager: CommandManager,
 		private readonly _activeTextEditorManager: ActiveJsTsEditorTracker,
+		private readonly workspaceFolder?: vscode.WorkspaceFolder
 	) {
 		super();
 
@@ -207,7 +208,9 @@ export class IntellisenseStatus extends Disposable {
 
 	private ensureStatusItem(): vscode.LanguageStatusItem {
 		if (!this._statusItem) {
-			this._statusItem = vscode.languages.createLanguageStatusItem('typescript.projectStatus', jsTsLanguageModes);
+			this._statusItem = vscode.languages.createLanguageStatusItem(
+				`typescript.projectStatus${this.workspaceFolder === undefined ? '' : `.${this.workspaceFolder.name}`}`,
+				jsTsLanguageModes);
 			this._statusItem.name = localize('statusItem.name', "JS/TS IntelliSense Status");
 		}
 		return this._statusItem;
