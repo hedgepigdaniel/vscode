@@ -78,7 +78,7 @@ export function activate(
 		context.subscriptions.push(module.register());
 	});
 
-	context.subscriptions.push(lazilyActivateClient(context, lazyClientHost, pluginManager, activeJsTsEditorTracker));
+	context.subscriptions.push(lazilyActivateClient(context, lazyClientHost, pluginManager));
 
 	return getExtensionApi(onCompletionAccepted.event, pluginManager);
 }

@@ -60,7 +60,7 @@ export function activate(
 		context.subscriptions.push(module.register());
 	});
 
-	context.subscriptions.push(lazilyActivateClient(context, hostFactory, pluginManager, activeJsTsEditorTracker));
+	context.subscriptions.push(lazilyActivateClient(context, hostFactory, pluginManager));
 
 	return getExtensionApi(onCompletionAccepted.event, pluginManager);
 }
