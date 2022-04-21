@@ -26,25 +26,26 @@ export class TypeScriptVersionManager extends Disposable {
 	public constructor(
 		private configuration: TypeScriptServiceConfiguration,
 		private readonly versionProvider: ITypeScriptVersionProvider,
-		private readonly workspaceState: vscode.Memento
+		private readonly workspaceState: vscode.Memento,
+		private readonly workspaceFolder?: vscode.WorkspaceFolder
 	) {
 		super();
 
 		this._currentVersion = this.versionProvider.defaultVersion;
 
 		if (this.useWorkspaceTsdkSetting) {
-			if (vscode.workspace.isTrusted) {
+			// if (vscode.workspace.isTrusted) {
 				const localVersion = this.versionProvider.localVersion;
 				if (localVersion) {
 					this._currentVersion = localVersion;
 				}
-			} else {
-				this._disposables.push(vscode.workspace.onDidGrantWorkspaceTrust(() => {
-					if (this.versionProvider.localVersion) {
-						this.updateActiveVersion(this.versionProvider.localVersion);
-					}
-				}));
-			}
+			// } else {
+			// 	this._disposables.push(vscode.workspace.onDidGrantWorkspaceTrust(() => {
+			// 		if (this.versionProvider.localVersion) {
+			// 			this.updateActiveVersion(this.versionProvider.localVersion);
+			// 		}
+			// 	}));
+			// }
 		}
 
 		if (this.isInPromptWorkspaceTsdkState(configuration)) {
@@ -61,6 +62,16 @@ export class TypeScriptVersionManager extends Disposable {
 	public updateConfiguration(nextConfiguration: TypeScriptServiceConfiguration) {
 		const lastConfiguration = this.configuration;
 		this.configuration = nextConfiguration;
+
+		const oldLocalVersion = this.versionProvider.localVersion?.tsServerPath;
+		this.versionProvider.updateConfiguration(nextConfiguration);
+		const newLocalVersion = this.versionProvider.localVersion?.tsServerPath;
+
+		if (newLocalVersion !== oldLocalVersion) {
+			this.updateActiveVersion(
+				this.versionProvider.localVersion || this.versionProvider.defaultVersion
+			);
+		}
 
 		if (
 			!this.isInPromptWorkspaceTsdkState(lastConfiguration)
@@ -121,13 +132,13 @@ export class TypeScriptVersionManager extends Disposable {
 				description: version.displayName,
 				detail: version.pathLabel,
 				run: async () => {
-					const trusted = await vscode.workspace.requestWorkspaceTrust();
-					if (trusted) {
+					// const trusted = await vscode.workspace.requestWorkspaceTrust();
+					// if (trusted) {
 						await this.workspaceState.update(useWorkspaceTsdkStorageKey, true);
-						const tsConfig = vscode.workspace.getConfiguration('typescript');
-						await tsConfig.update('tsdk', version.pathLabel, false);
+						const tsConfig = vscode.workspace.getConfiguration('typescript', this.workspaceFolder);
+						await tsConfig.update('tsdk', version.pathLabel, null);
 						this.updateActiveVersion(version);
-					}
+					// }
 				},
 			};
 		});
