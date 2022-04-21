@@ -2,7 +2,7 @@
   "name": "typescript-language-features-multi-host",
   "description": "Spawn separate typescript servers for multi root workspaces",
   "displayName": "Typescript Language Server - Multi Host mode",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "author": "vscode",
   "publisher": "hedgepigdaniel",
   "license": "MIT",
