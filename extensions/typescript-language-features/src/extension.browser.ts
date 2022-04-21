@@ -28,6 +28,10 @@ class StaticVersionProvider implements ITypeScriptVersionProvider {
 		// noop
 	}
 
+	updateWorkspaceFolder(_workspaceFolder: vscode.WorkspaceFolder): void {
+		// noop
+	}
+
 	get defaultVersion() { return this._version; }
 	get bundledVersion() { return this._version; }
 

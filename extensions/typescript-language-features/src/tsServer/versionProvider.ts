@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as nls from 'vscode-nls';
+import * as vscode from 'vscode';
 import API from '../utils/api';
 import { TypeScriptServiceConfiguration } from '../utils/configuration';
 
@@ -61,6 +62,7 @@ export class TypeScriptVersion {
 
 export interface ITypeScriptVersionProvider {
 	updateConfiguration(configuration: TypeScriptServiceConfiguration): void;
+	updateWorkspaceFolder(workspaceFolder?: vscode.WorkspaceFolder): void;
 
 	readonly defaultVersion: TypeScriptVersion;
 	readonly globalVersion: TypeScriptVersion | undefined;

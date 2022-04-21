@@ -31,6 +31,8 @@ export class TypeScriptVersionManager extends Disposable {
 	) {
 		super();
 
+		this.versionProvider.updateWorkspaceFolder(workspaceFolder);
+
 		this._currentVersion = this.versionProvider.defaultVersion;
 
 		if (this.useWorkspaceTsdkSetting) {
@@ -136,7 +138,7 @@ export class TypeScriptVersionManager extends Disposable {
 					// if (trusted) {
 						await this.workspaceState.update(useWorkspaceTsdkStorageKey, true);
 						const tsConfig = vscode.workspace.getConfiguration('typescript', this.workspaceFolder);
-						await tsConfig.update('tsdk', version.pathLabel, null);
+						await tsConfig.update('tsdk', version.pathLabel.slice((this.workspaceFolder?.name.length || -1) + 1), null);
 						this.updateActiveVersion(version);
 					// }
 				},

@@ -13,12 +13,18 @@ import { ITypeScriptVersionProvider, localize, TypeScriptVersion, TypeScriptVers
 
 export class DiskTypeScriptVersionProvider implements ITypeScriptVersionProvider {
 
+	private workspaceFolder?: vscode.WorkspaceFolder;
+
 	public constructor(
 		private configuration?: TypeScriptServiceConfiguration
 	) { }
 
 	public updateConfiguration(configuration: TypeScriptServiceConfiguration): void {
 		this.configuration = configuration;
+	}
+
+	public updateWorkspaceFolder(workspaceFolder?: vscode.WorkspaceFolder): void {
+		this.workspaceFolder = workspaceFolder;
 	}
 
 	public get defaultVersion(): TypeScriptVersion {
@@ -109,7 +115,7 @@ export class DiskTypeScriptVersionProvider implements ITypeScriptVersionProvider
 			];
 		}
 
-		const workspacePath = RelativeWorkspacePathResolver.asAbsoluteWorkspacePath(tsdkPathSetting, this.configuration?.workspaceFolder);
+		const workspacePath = RelativeWorkspacePathResolver.asAbsoluteWorkspacePath(tsdkPathSetting, this.workspaceFolder);
 		if (workspacePath !== undefined) {
 			const serverPath = path.join(workspacePath, 'tsserver.js');
 			return [
