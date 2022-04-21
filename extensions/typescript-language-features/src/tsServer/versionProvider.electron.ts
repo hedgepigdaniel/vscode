@@ -140,14 +140,9 @@ export class DiskTypeScriptVersionProvider implements ITypeScriptVersionProvider
 		}
 
 		const versions: TypeScriptVersion[] = [];
-		for (const root of vscode.workspace.workspaceFolders) {
-			let label: string = relativePath;
-			if (vscode.workspace.workspaceFolders.length > 1) {
-				label = path.join(root.name, relativePath);
-			}
-
+		for (const root of this.workspaceFolder ? [this.workspaceFolder] : vscode.workspace.workspaceFolders) {
 			const serverPath = path.join(root.uri.fsPath, relativePath, 'tsserver.js');
-			versions.push(new TypeScriptVersion(source, serverPath, DiskTypeScriptVersionProvider.getApiVersion(serverPath), label));
+			versions.push(new TypeScriptVersion(source, serverPath, DiskTypeScriptVersionProvider.getApiVersion(serverPath), relativePath));
 		}
 		return versions;
 	}
